@@ -160,17 +160,17 @@ class Minesweeper:
                         self.toggle_flag(row, col)
 
     def draw_board(self):
-        self.screen.fill(WHITE)
+        self.screen.fill(GRAY)  # Màu nền xám cho các ô chưa mở
         for row in range(self.rows):
             for col in range(self.cols):
                 cell_rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(self.screen, GRAY, cell_rect)
-                pygame.draw.rect(self.screen, BLACK, cell_rect, 1)
                 if self.revealed[row][col]:
+                    pygame.draw.rect(self.screen, WHITE, cell_rect)  # Màu nền trắng cho các ô đã mở
+                    pygame.draw.rect(self.screen, BLACK, cell_rect, 1)
                     if self.board[row][col] == '*':
                         pygame.draw.circle(self.screen, BLUE,
-                                           (col * CELL_SIZE + CELL_SIZE // 2, row * CELL_SIZE + CELL_SIZE // 2),
-                                           CELL_SIZE // 4)
+                                        (col * CELL_SIZE + CELL_SIZE // 2, row * CELL_SIZE + CELL_SIZE // 2),
+                                        CELL_SIZE // 4)
                     else:
                         font = pygame.font.SysFont(None, 24)
                         text = font.render(self.board[row][col], True, BLACK)
@@ -179,8 +179,11 @@ class Minesweeper:
                         self.screen.blit(text, text_rect)
                 elif self.flagged[row][col]:
                     pygame.draw.rect(self.screen, BLUE, cell_rect)
+                else:
+                    pygame.draw.rect(self.screen, GRAY, cell_rect)
+                    pygame.draw.rect(self.screen, BLACK, cell_rect, 1)
         pygame.display.flip()
-
+        
     def reveal_board(self):
         for row in range(self.rows):
             for col in range(self.cols):
