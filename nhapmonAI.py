@@ -1,6 +1,6 @@
 #các thư viện được sử dụng
 import random
-import pygame
+import pygame 
 
 # Define colors: định dạng màu sắc
 BLACK = (0, 0, 0)
@@ -13,7 +13,38 @@ CELL_SIZE = 40
 WINDOW_WIDTH = 8 * CELL_SIZE
 WINDOW_HEIGHT = 8 * CELL_SIZE
 
-def flood_fill(board, row, col, revealed):
+
+# khỏi tạo lớp Minesweeper
+class Minesweeper:
+    # là phương thức khởi tạo của lớp
+    def __init__(self, rows, cols, num_mines):
+        self.rows = rows
+        self.cols = cols
+        self.num_mines = num_mines
+        self.board = [[' ' for _ in range(cols)] for _ in range(rows)]
+        self.mines = set()
+        self.revealed = [[False for _ in range(cols)] for _ in range(rows)]
+        self.flagged = [[False for _ in range(cols)] for _ in range(rows)]
+
+    # Initialize Pygame: Khởi tạo Pygame
+        pygame.init()
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        pygame.display.set_caption("Minesweeper")
+    
+    # đặt ngẫu nhiên các quả mìn 
+    def place_mines(self, start_row, start_col):
+        excluded_cells = self.get_adjacent_cells(start_row, start_col)
+        excluded_cells.append((start_row, start_col))
+        while len(self.mines) < self.num_mines:
+            row = random.randint(0, self.rows - 1)
+            col = random.randint(0, self.cols - 1)
+            if (row, col) not in excluded_cells:
+                self.mines.add((row, col))
+    #Phương thức này được sử dụng để kiểm tra xem một tọa độ ô (row, col) có hợp lệ trên bảng trò chơi hay không
+    def is_valid(self, row, col):
+        return 0 <= row < self.rows and 0 <= col < self.cols
+    #thuật toán loang    
+    def flood_fill(self, board, row, col, revealed):
         rows = len(board)
         cols = len(board[0])
 
@@ -32,34 +63,9 @@ def flood_fill(board, row, col, revealed):
                 ni = row + dx
                 nj = col + dy
                 if 0 <= ni < rows and 0 <= nj < cols:
-                    flood_fill(board, ni, nj, revealed)
-class Minesweeper:
-    def __init__(self, rows, cols, num_mines):
-        self.rows = rows
-        self.cols = cols
-        self.num_mines = num_mines
-        self.board = [[' ' for _ in range(cols)] for _ in range(rows)]
-        self.mines = set()
-        self.revealed = [[False for _ in range(cols)] for _ in range(rows)]
-        self.flagged = [[False for _ in range(cols)] for _ in range(rows)]
-
-        # Initialize Pygame: Khởi tạo Pygame
-        pygame.init()
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        pygame.display.set_caption("Minesweeper")
-
-    def place_mines(self, start_row, start_col):
-        excluded_cells = self.get_adjacent_cells(start_row, start_col)
-        excluded_cells.append((start_row, start_col))
-        while len(self.mines) < self.num_mines:
-            row = random.randint(0, self.rows - 1)
-            col = random.randint(0, self.cols - 1)
-            if (row, col) not in excluded_cells:
-                self.mines.add((row, col))
-
-    def is_valid(self, row, col):
-        return 0 <= row < self.rows and 0 <= col < self.cols
-
+                    self.flood_fill(board, ni, nj, revealed)
+                    
+    #Phương thức này trả về danh sách các ô kề cạnh một ô (row, col) trên bảng trò chơi
     def get_adjacent_cells(self, row, col):
         adjacent_cells = []
         for i in range(-1, 2):
@@ -71,7 +77,8 @@ class Minesweeper:
                 if self.is_valid(new_row, new_col):
                     adjacent_cells.append((new_row, new_col))
         return adjacent_cells
-
+    
+    #Phương thức này được sử dụng để đếm số lượng mìn kề cạnh ô (row, col) trên bảng trò chơi
     def count_adjacent_mines(self, row, col):
         count = 0
         adjacent_cells = self.get_adjacent_cells(row, col)
@@ -80,7 +87,7 @@ class Minesweeper:
                 count += 1
         return count
  
-   
+    # phương thức trong lớp Minesweeper và được sử dụng để tiết lộ một ô cụ thể trong trò chơi Minesweeper và thực hiện các hành động liên quan đến việc tiết lộ ô đó.
     def reveal_cell(self, row, col):
         if not self.is_valid(row, col) or self.revealed[row][col]:
             return
@@ -94,10 +101,11 @@ class Minesweeper:
                 adjacent_cells = self.get_adjacent_cells(row, col)
                 for cell in adjacent_cells:
                     self.reveal_cell(cell[0], cell[1])
-        #thuật toán loang //////////////////////////
+                    
                 revealed = [[False for _ in range(self.cols)] for _ in range(self.rows)]
-                flood_fill(self.board, row, col, revealed)   
-                
+                self.flood_fill(self.board, row, col, revealed)
+                  
+           
     def choose_greedy_move(self):
         rows = self.rows
         cols = self.cols
@@ -118,20 +126,24 @@ class Minesweeper:
                                 count += 1
                     if count < min_mines:
                         min_mines = count
-                        chosen_row = i
+                        chosen_row = i#thuat toan tham lam  
                         chosen_col = j
 
         return chosen_row, chosen_col
-
+    
+    #phương thức trong lớp Minesweeper và được sử dụng để tiết lộ một ô cụ thể trong trò chơi Minesweeper và thực hiện các hành động liên quan đến việc tiết lộ ô đó.
     def toggle_flag(self, row, col):
         if not self.is_valid(row, col) or self.revealed[row][col]:
             return
         self.flagged[row][col] = not self.flagged[row][col]
-
+        
+    #khởi tạo phương thức play 
     def play(self):
+        #tạo vị trí ngẫu nhiên để đặt mìn
         start_row = random.randint(0, self.rows - 1)
         start_col = random.randint(0, self.cols - 1)
         self.place_mines(start_row, start_col)
+        # vòng lặp chính để chơi trò chơi
         game_over = False
         while not game_over:
             self.draw_board()
@@ -158,7 +170,8 @@ class Minesweeper:
                         col = pos[0] // CELL_SIZE
                         row = pos[1]// CELL_SIZE
                         self.toggle_flag(row, col)
-
+                        
+    #thực hiện việc vẽ bảng trò chơi và các ô trạng thái tương ứng lên giao diện đồ họa.
     def draw_board(self):
         self.screen.fill(GRAY)  # Màu nền xám cho các ô chưa mở
         for row in range(self.rows):
@@ -184,11 +197,13 @@ class Minesweeper:
                     pygame.draw.rect(self.screen, BLACK, cell_rect, 1)
         pygame.display.flip()
         
+    # hiển thị toàn bộ bảng trò chơi( bằng cách tiết lộ tất cả các ô)       
     def reveal_board(self):
         for row in range(self.rows):
             for col in range(self.cols):
                 self.revealed[row][col] = True
-
+                
+    #Phương thức này được sử dụng để kiểm tra xem người chơi đã chiến thắng trò chơi hay chưa
     def check_win(self):
         for row in range(self.rows):
             for col in range(self.cols):
@@ -196,6 +211,5 @@ class Minesweeper:
                     return False
         return True
 
-# Example usage:
 minesweeper = Minesweeper(8, 8, 3)
 minesweeper.play()
