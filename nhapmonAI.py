@@ -1,7 +1,7 @@
 #các thư viện được sử dụng
 import random
 import pygame 
-
+import sys
 # Define colors: định dạng màu sắc
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -40,9 +40,8 @@ class Minesweeper:
             col = random.randint(0, self.cols - 1)
             if (row, col) not in excluded_cells:
                 self.mines.add((row, col))
-    #Phương thức này được sử dụng để kiểm tra xem một tọa độ ô (row, col) có hợp lệ trên bảng trò chơi hay không
-    def is_valid(self, row, col):
-        return 0 <= row < self.rows and 0 <= col < self.cols
+                
+    
     #thuật toán loang    
     def flood_fill(self, board, row, col, revealed):
         rows = len(board)
@@ -65,6 +64,10 @@ class Minesweeper:
                 if 0 <= ni < rows and 0 <= nj < cols:
                     self.flood_fill(board, ni, nj, revealed)
                     
+    #Phương thức này được sử dụng để kiểm tra xem một tọa độ ô (row, col) 
+    # có hợp lệ trên bảng trò chơi hay không
+    def is_valid(self, row, col):
+        return 0 <= row < self.rows and 0 <= col < self.cols                
     #Phương thức này trả về danh sách các ô kề cạnh một ô (row, col) trên bảng trò chơi
     def get_adjacent_cells(self, row, col):
         adjacent_cells = []
@@ -87,7 +90,8 @@ class Minesweeper:
                 count += 1
         return count
  
-    # phương thức trong lớp Minesweeper và được sử dụng để tiết lộ một ô cụ thể trong trò chơi Minesweeper và thực hiện các hành động liên quan đến việc tiết lộ ô đó.
+    # phương thức trong lớp Minesweeper và được sử dụng để tiết lộ một ô cụ thể 
+    # trong trò chơi Minesweeper và thực hiện các hành động liên quan đến việc tiết lộ ô đó.
     def reveal_cell(self, row, col):
         if not self.is_valid(row, col) or self.revealed[row][col]:
             return
@@ -131,12 +135,26 @@ class Minesweeper:
 
         return chosen_row, chosen_col
     
-    #phương thức trong lớp Minesweeper và được sử dụng để tiết lộ một ô cụ thể trong trò chơi Minesweeper và thực hiện các hành động liên quan đến việc tiết lộ ô đó.
+   #chuyển đổi trạng thái từ ô đã đánh dấu và ngược lại 
     def toggle_flag(self, row, col):
         if not self.is_valid(row, col) or self.revealed[row][col]:
             return
         self.flagged[row][col] = not self.flagged[row][col]
-        
+    #
+    def show_message(self, title, message):
+        pygame.display.set_caption(title)  # Đặt tiêu đề cửa sổ
+        font = pygame.font.Font(None, 36)  # Định dạng font chữ
+        text = font.render(message, True, (0, 0, 0))  # Tạo đối tượng văn bản
+        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))  # Vị trí văn bản
+        self.screen.fill(WHITE)  # Xóa màn hình với màu trắng
+        self.screen.blit(text, text_rect)  # Vẽ văn bản lên màn hình
+        pygame.display.flip()  # Cập nhật màn hình
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                        
     #khởi tạo phương thức play 
     def play(self):
         #tạo vị trí ngẫu nhiên để đặt mìn
@@ -158,13 +176,20 @@ class Minesweeper:
                         if not self.revealed[row][col]:
                             if (row, col) in self.mines:
                                 print("Game over! You hit a mine.")
+                                self.draw_board()  # Vẽ lại bảng trò chơi trước khi hiển thị thông báo
+                                self.show_message("Game Over", "You lost!")  # Hiển thị thông báo thua
+                                game_over = True
                                 self.reveal_board()
                                 game_over = True
                             else:
                                 self.reveal_cell(row, col)
                                 if self.check_win():
-                                    print("Congratulations! You won!")
-                                    game_over = True
+                                    if self.check_win():
+                                        self.draw_board()  # Vẽ lại bảng trò chơi trước khi hiển thị thông báo
+                                        self.show_message("Congratulations!", "You won!")  # Hiển thị thông báo chiến thắng
+                                        game_over = True
+                                        print("Congratulations! You won!")
+                                        game_over = True
                     elif event.button == 3:  # Right mouse button
                         pos = pygame.mouse.get_pos()
                         col = pos[0] // CELL_SIZE
